@@ -59,15 +59,25 @@ app.use((err, req, res, next) => {
 
 // Serve static files from React build
 const clientBuildPath = path.join(__dirname, '../client/build');
+
+// Serve static files from React build (JS, CSS, images, etc.)
 app.use(express.static(clientBuildPath));
 
 // Serve React app for all non-API routes (client-side routing)
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  } else {
-    res.status(404).json({ message: 'Route not found' });
+// This serves index.html for any route that's not an API route
+app.get(/.*/, (req, res) => {
+  // If it's an API route that wasn't matched, return 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'Route not found' });
   }
+  
+  // If headers were already sent (e.g., by static middleware), skip
+  if (res.headersSent) {
+    return;
+  }
+  
+  // Serve the React app (index.html) for client-side routing
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
 // Start server
