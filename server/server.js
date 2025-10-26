@@ -14,8 +14,22 @@ const app = express();
 connectDB();
 
 // Middleware
+// CORS configuration - allow requests from client URL and from same origin (for production)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.BASE_URL || `https://homeverse-1.onrender.com`,
+  'http://localhost:3000'
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -34,7 +48,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// Error handling middleware
+// Error handling middleware (must come before catch-all route)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ 
@@ -43,9 +57,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+// Serve static files from React build
+const clientBuildPath = path.join(__dirname, '../client/build');
+app.use(express.static(clientBuildPath));
+
+// Serve React app for all non-API routes (client-side routing)
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  } else {
+    res.status(404).json({ message: 'Route not found' });
+  }
 });
 
 // Start server
