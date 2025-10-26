@@ -14,23 +14,26 @@ const app = express();
 connectDB();
 
 // Middleware
-// CORS configuration - allow requests from client URL and from same origin (for production)
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  process.env.BASE_URL || `https://homeverse-1.onrender.com`,
-  'http://localhost:3000'
-].filter(Boolean); // Remove undefined values
-
+// CORS configuration - allow requests from same origin in production
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // In production or when deployed, allow the same origin (since client and server are on the same domain)
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.BASE_URL;
+    
+    if (isProduction || !origin) {
+      // Allow same-origin requests (no origin header present)
+      callback(null, true);
+    } else if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') {
+      // Allow localhost for development
       callback(null, true);
     } else {
-      callback(null, true); // Allow all origins for now
+      // Deny other origins
+      callback(null, true); // Temporarily allow all for debugging
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

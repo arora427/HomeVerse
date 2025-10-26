@@ -1,7 +1,23 @@
 import axios from 'axios';
 
+// Determine the base URL for API requests
+const getBaseURL = () => {
+  // If REACT_APP_API_URL is explicitly set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // In production (on Render), use relative URLs for same-origin requests
+  if (window.location.origin.includes('onrender.com') || process.env.NODE_ENV === 'production') {
+    return ''; // Use relative URLs, so requests go to the same server
+  }
+  
+  // In development, use localhost
+  return 'http://localhost:5000';
+};
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  baseURL: getBaseURL(),
 });
 
 // Request interceptor to add JWT token
