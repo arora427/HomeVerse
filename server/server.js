@@ -47,10 +47,8 @@ app.use(cors({
   credentials: true,
 }));
 
-// handle preflight for all routes (use default origin handling)
-// Use '/*' instead of '*' because path-to-regexp (used by Express router)
-// can throw on the single '*' pattern in some versions.
-app.options('/*', cors());
+// handle preflight for all routes using regex pattern (Express 5 compatibility)
+app.options(/.*/, cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
