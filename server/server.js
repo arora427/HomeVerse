@@ -14,27 +14,41 @@ const app = express();
 connectDB();
 
 // Middleware
-// CORS configuration - allow requests from same origin in production
+// Use CLIENT_URL env var (can be comma-separated list like "http://localhost:3000,https://homeverse-1.onrender.com")
+const clientUrls = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',')
+  .map(u => u.trim())
+  .filter(Boolean);
+
+// CORS middleware: allow listed origins; allow requests without origin (curl, server-to-server)
+// Also automatically allow Render-hosted frontends (*.onrender.com) when running in production
 app.use(cors({
-  origin: function (origin, callback) {
-    // In production or when deployed, allow the same origin (since client and server are on the same domain)
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.BASE_URL;
-    
-    if (isProduction || !origin) {
-      // Allow same-origin requests (no origin header present)
-      callback(null, true);
-    } else if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') {
-      // Allow localhost for development
-      callback(null, true);
-    } else {
-      // Deny other origins
-      callback(null, true); // Temporarily allow all for debugging
+  origin: (origin, callback) => {
+    // allow non-browser or same-origin requests (no origin header)
+    if (!origin) return callback(null, true);
+
+    // allow explicit client URLs from CLIENT_URL
+    if (clientUrls.includes(origin)) return callback(null, true);
+
+    // allow Render deployments automatically when in production
+    if (process.env.NODE_ENV === 'production' && origin.endsWith('.onrender.com')) {
+      return callback(null, true);
     }
+
+    // allow if Render provided the external URL of this service
+    if (process.env.RENDER_EXTERNAL_URL && origin === process.env.RENDER_EXTERNAL_URL) {
+      return callback(null, true);
+    }
+
+    // Otherwise block and log for debugging
+    console.warn(`Blocked CORS origin: ${origin}`);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// handle preflight for all routes (use default origin handling)
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
