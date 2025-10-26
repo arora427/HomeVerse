@@ -48,7 +48,9 @@ app.use(cors({
 }));
 
 // handle preflight for all routes (use default origin handling)
-app.options('*', cors());
+// Use '/*' instead of '*' because path-to-regexp (used by Express router)
+// can throw on the single '*' pattern in some versions.
+app.options('/*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
