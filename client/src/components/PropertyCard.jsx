@@ -3,13 +3,9 @@ import { Link } from 'react-router-dom';
 import { formatINR } from '../utils/format';
 
 const PropertyCard = ({ property }) => {
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '/assets/images/property-1.jpg';
-    if (imagePath.startsWith('/uploads')) {
-      return `${API_URL}${imagePath}`;
-    }
+    // In production, use relative URLs since server and client are on same domain
     return imagePath;
   };
 
