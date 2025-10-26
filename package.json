@@ -1,9 +1,10 @@
+
 {
   "name": "chahomeversetwave",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npm install --prefix server && npm install --prefix client --legacy-peer-deps && npm run build --prefix client",
+    "build": "npm install --prefix server && npm install --prefix client --legacy-peer-deps && npm run build --prefix client && echo '/*    /index.html   200' > client/build/_redirects",
     "start": "npm run start --prefix server"
   }
 }
